@@ -1,17 +1,8 @@
-// 全局变量存储授权状态
-let isLicensed = false;
-
-// 更新标签页可见性
-function updateTabsVisibility(licensed) {
+// 更新标签页可见性 - 所有标签都显示
+function updateTabsVisibility() {
     const tabs = document.querySelectorAll('#mainTabs .nav-item');
-    tabs.forEach((tab, index) => {
-        if (index === 0 || index === tabs.length - 1) { // 用户信息（第一个）和设置（最后一个）标签
-            tab.style.display = ''; // 始终显示
-        } else if (licensed) {
-            tab.style.display = ''; // 显示
-        } else {
-            tab.style.display = 'none'; // 隐藏
-        }
+    tabs.forEach(tab => {
+        tab.style.display = ''; // 所有标签都显示
     });
 }
 
@@ -27,10 +18,9 @@ async function updateLicenseInfo() {
         const status = licenseResponse.status;
         const machineCode = machineCodeResponse.machineCode;
         const userInfo = userInfoResponse.success ? userInfoResponse.data : null;
-        isLicensed = status.isValid;
 
         // 更新标签页可见性
-        updateTabsVisibility(isLicensed);
+        updateTabsVisibility();
 
         const userInfoContent = document.getElementById('user-info');
         let html = `
@@ -50,60 +40,57 @@ async function updateLicenseInfo() {
                     </div>
                 </div>`;
 
-        if (isLicensed) {
-            // 已授权状态：显示完整的授权信息
-            const info = status.licenseInfo;
-            html += `
-                <div class="card">
-                    <div class="card-body">
-                        <div class="list-group">
-                            <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
-                                <span class="label" style="color: #8a8a8a;">用户名</span>
-                                <span class="value" style="color: #ffffff;">${info.username || '未设置'}</span>
-                            </div>
-                            <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
-                                <span class="label" style="color: #8a8a8a;">授权类型</span>
-                                <span class="value" style="color: #ffffff;">${info.type || '未知'}</span>
-                            </div>
-                            <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
-                                <span class="label" style="color: #8a8a8a;">过期时间</span>
-                                <span class="value" style="color: #ffffff;">${new Date(info.expiryDate).toLocaleString()}</span>
-                            </div>`;
-
-            if (userInfo) {
-                html += `
-                    <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
-                        <span class="label" style="color: #8a8a8a;">剩余可创建账号</span>
-                        <span class="value" style="color: #ffffff;">${userInfo.remainingAccounts}</span>
-                    </div>`;
-
-                if (userInfo.latestAccount) {
-                    html += `
-                        <div class="list-group-item bg-dark-subtle border-dark text-light" style="background-color: #1a1a1a !important; border-color: #404040;">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="label" style="color: #8a8a8a;">最近创建的账号</span>
-                            </div>
-                            <div class="mt-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="label" style="color: #8a8a8a;">邮箱</span>
-                                    <span class="value" style="color: #ffffff;">${userInfo.latestAccount.email}</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <span class="label" style="color: #8a8a8a;">创建时间</span>
-                                    <span class="value" style="color: #ffffff;">${new Date(userInfo.latestAccount.createdAt).toLocaleString()}</span>
-                                </div>
-                            </div>
-                        </div>`;
-                }
-            }
-
-            html += `
+        // 显示授权信息
+        const info = status.licenseInfo;
+        html += `
+            <div class="card">
+                <div class="card-body">
+                    <div class="list-group">
+                        <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
+                            <span class="label" style="color: #8a8a8a;">用户名</span>
+                            <span class="value" style="color: #ffffff;">${info.username || '未设置'}</span>
                         </div>
-                    </div>
+                        <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
+                            <span class="label" style="color: #8a8a8a;">授权类型</span>
+                            <span class="value" style="color: #ffffff;">${info.type || '未知'}</span>
+                        </div>
+                        <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
+                            <span class="label" style="color: #8a8a8a;">过期时间</span>
+                            <span class="value" style="color: #ffffff;">${new Date(info.expiryDate).toLocaleString()}</span>
+                        </div>`;
+
+        if (userInfo) {
+            html += `
+                <div class="list-group-item bg-dark-subtle border-dark text-light d-flex justify-content-between align-items-center" style="background-color: #1a1a1a !important; border-color: #404040;">
+                    <span class="label" style="color: #8a8a8a;">剩余可创建账号</span>
+                    <span class="value" style="color: #ffffff;">${userInfo.remainingAccounts}</span>
                 </div>`;
+
+            if (userInfo.latestAccount) {
+                html += `
+                    <div class="list-group-item bg-dark-subtle border-dark text-light" style="background-color: #1a1a1a !important; border-color: #404040;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="label" style="color: #8a8a8a;">最近创建的账号</span>
+                        </div>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="label" style="color: #8a8a8a;">邮箱</span>
+                                <span class="value" style="color: #ffffff;">${userInfo.latestAccount.email}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <span class="label" style="color: #8a8a8a;">创建时间</span>
+                                <span class="value" style="color: #ffffff;">${new Date(userInfo.latestAccount.createdAt).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>`;
+            }
         }
 
-        html += `</div>`;
+        html += `
+                    </div>
+                </div>
+            </div>
+        </div>`;
         userInfoContent.innerHTML = html;
     } catch (error) {
         console.error('获取信息失败:', error);
@@ -144,4 +131,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 每分钟更新一次信息
-setInterval(updateLicenseInfo, 60000); 
+setInterval(updateLicenseInfo, 60000);
