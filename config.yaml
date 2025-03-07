@@ -4,34 +4,34 @@ server:
 auth:
   token: ''
 proxy:
-  enabled: false
+  enabled: true
   host: 127.0.0.1
   port: 10808
   protocol: socks5
 cloudflare:
+  apiToken: null
+  zoneId: null
+  emailForward: null
+  virtualDomain: null
   proxy: false
-  apiToken: ''
-  zoneId: ''
-  emailForward: ''
-  virtualDomain: ''
 email:
-  proxy: false
+  proxy: true
   type: publicApi
-  user: ''
-  pass: ''
+  publicApi:
+    apiEndpoint: https://emailapi.goaiwork.online
+  user: null
+  pass: null
   tempmail:
     preferredDomain: fexpost.com
     customizeUsername: true
-    username: ''
-    pin: ''
+    username: null
+    pin: null
     lifetime: 2days
-  publicApi:
-    apiEndpoint: https://emailapi.goaiwork.online
   smtp:
-    enabled: false
     host: smtp.gmail.com
     port: 465
     secure: true
+    enabled: false
   imap:
     enabled: true
     host: imap.gmail.com
@@ -46,6 +46,6 @@ registration:
   type: cursor
   manual: false
 browser:
-  proxy: false
+  proxy: true
   headless: false
   checkFingerprint: false
