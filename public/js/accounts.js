@@ -107,6 +107,9 @@ function displayAccounts(accounts) {
                         <li><a class="dropdown-item account-login-btn" href="#" data-email="${email}" data-password="${password}">
                             <i class="bi bi-box-arrow-in-right"></i> 账号登录
                         </a></li>
+                        <li><a class="dropdown-item account-keepalive-btn" href="#" data-email="${email}" data-password="${password}">
+                            <i class="bi bi-box-arrow-in-right"></i> 账号保活
+                        </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger delete-account-btn" href="#" data-email="${email}">
                             <i class="bi bi-trash"></i> 删除账号
@@ -223,6 +226,31 @@ function displayAccounts(accounts) {
     });
 
     // 添加账号登录按钮事件监听
+    document.querySelectorAll('.account-keepalive-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.account-keepalive-btn');
+            const credentials = {
+                email: target.dataset.email,
+                password: target.dataset.password
+            };
+            
+            try {
+                appendToConsole('info', `准备账号保活: ${credentials.email}`);
+
+                const result = await API.register.keepalive(credentials);
+                
+                if (result.success) {
+                    appendToConsole('success', '登录成功！');
+                } else {
+                    throw new Error(result.error || '登录失败');
+                }
+            } catch (error) {
+                appendToConsole('error', `登录失败: ${error.message}`);
+            }
+        });
+    });
+
     document.querySelectorAll('.account-login-btn').forEach(button => {
         button.addEventListener('click', async (e) => {
             e.preventDefault();

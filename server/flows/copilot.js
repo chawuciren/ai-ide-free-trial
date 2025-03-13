@@ -1,10 +1,13 @@
 const logger = require('../utils/logger');
 const delay = require('../utils/delay');
 const HumanBehavior = require('../utils/human-behavior');
+const AccountGenerator = require('../utils/account-generator');
 
 class Copilot {
     constructor() {
         this.url = 'https://github.com/signup';
+        this.loginUrl = 'https://github.com/login'
+        this.homeUrl = 'https://github.com/'
         this.humanBehavior = new HumanBehavior();
     }
 
@@ -204,22 +207,100 @@ class Copilot {
     }
 
     async login(browser, initPage, account) {
+        let page;
+        try {
+            // 验证账号信息
+            if (!account || !account.email || !account.password) {
+                throw new Error('登录账号信息不完整');
+            }
+            logger.info('开始 Github 登录流程...');
+            
+            // 打开 cursor.sh 页面
+            page = await browser.newPage();
+            await page.goto(this.loginUrl);
 
+            // 模拟初始浏览行为
+            await this.humanBehavior.simulateHumanBehavior(page);
+            logger.info('完成初始人类行为模拟');
+
+
+
+            // 模拟浏览行为
+            await this.humanBehavior.simulateHumanBehavior(page);
+
+            // 填写邮箱
+            const emailSelector = '#login_field';
+            await this.humanBehavior.simulateHumanTyping(page, emailSelector, account.email);
+            logger.info('已填写邮箱');
+
+            // 模拟思考行为
+            await this.humanBehavior.simulateHumanBehavior(page, { duration: 2000, movements: 2 });
+
+            
+            // 填写密码
+            const passwordSelector = '#password';
+            await this.humanBehavior.simulateHumanTyping(page, passwordSelector, account.password);
+            logger.info('已填写密码');
+
+            // 模拟思考行为
+            await this.humanBehavior.simulateHumanBehavior(page, { duration: 2000, movements: 2 });
+
+            // 点击登录按钮
+            const signInButtonSelector = 'input[type="submit"][name="commit"][value="Sign in"]';
+            await page.waitForSelector(signInButtonSelector);
+            await this.humanBehavior.simulateHoverAndClick(page, signInButtonSelector, {
+                maxRetries: 3  // 可选：设置最大重试次数
+            });
+            logger.info('已点击登录按钮');
+
+            // 等待登录完成
+            await page.waitForNavigation().catch(() => {
+                logger.info('页面可能没有跳转，继续执行');
+            });
+            logger.info('登录流程执行完成');
+
+            // 验证是否成功跳转到设置页面
+            // const currentUrl = page.url();
+            // if (!currentUrl.includes('/settings')) {
+            //     logger.error('页面未跳转到设置页面');
+            //     throw new Error('登录验证失败：未能进入设置页面');
+            // }
+
+            logger.info('登录验证成功：邮箱匹配确认');
+
+            // 返回浏览器和页面对象，以便后续操作
+            return { browser, page };
+        } catch (error) {
+            logger.error('Cursor 登录流程出错:', error);
+            throw error;
+        }
     }
 
-    async fillVerificationCode(page, code) {
+ 
+
+    async fillVerificationCode(browser, page, account, verificationCode) {
         try {
-            if (!code) {
+            if (!verificationCode) {
                 throw new Error('验证码不能为空');
             }
 
-            logger.info('开始填写验证码...');
+            logger.info('开始填写验证码...'+verificationCode);
             
-            // 等待验证码输入框出现
-            const codeInputSelector = '#code';
-            await page.waitForSelector(codeInputSelector);
-            await page.type(codeInputSelector, code.toString().trim());
-            logger.info('已填写验证码');
+            // 确保验证码是8位
+            // await delay(888888)
+            // 逐个填写8位验证码到对应的输入框
+            for (let i = 0; i < 8; i++) {
+                const codeInputSelector = `#launch-code-${i}`;
+                logger.info('定位元素...'+codeInputSelector);
+                // await page.waitForSelector(codeInputSelector);
+                await this.humanBehavior.simulateHumanTyping(page, codeInputSelector, verificationCode[i]);
+                // await page.type(codeInputSelector, code[i]);
+                logger.info(`已填写验证码第${i+1}位: ${verificationCode[i]}`);
+                
+                // 添加短暂延迟模拟人工输入
+                await delay(100 + Math.random() * 200);
+            }   
+
 
             // 点击验证按钮
             const verifyButtonSelector = 'button[type="submit"]';
@@ -235,15 +316,18 @@ class Copilot {
     }
 
     extractVerificationCode(emailContent) {
+        logger.info('获取到了邮件');
+        logger.info(emailContent);
+
         try {
             // 查找验证码的几种模式:
             // 1. 在 "code below" 之后的 6 位数字
             // 2. 在邮件正文中单独出现的 6 位数字
             // 3. 在 "code is" 之后的 6 位数字
             const patterns = [
-                /code below[^0-9]*(\d{6})/i,
-                /\b(\d{6})\b(?=(?:[^"]*"[^"]*")*[^"]*$)/,
-                /code is[^0-9]*(\d{6})/i
+                /code below[^0-9]*(\d{8})/i,
+                /\b(\d{8})\b(?=(?:[^"]*"[^"]*")*[^"]*$)/,
+                /code is[^0-9]*(\d{8})/i
             ];
 
             for (const pattern of patterns) {
@@ -263,7 +347,7 @@ class Copilot {
 
     // 获取验证邮件发送者地址
     getVerificationEmailSender() {
-        return 'no-reply@cursor.sh';
+        return 'noreply@github.com';
     }
 
     async getSessionToken(page, maxAttempts = 3, retryInterval = 2000) {
@@ -519,6 +603,114 @@ class Copilot {
         }
     }
     
+    async keepalive(browser, page,account) {
+        if (page !=null){
+
+        }else{
+            page = await browser.newPage();
+        //1.到页面 this.homeUrl+account.email'页面
+        }
+        try {
+            logger.info('开始执行 keepalive 流程...');
+            
+            if (page != null) {
+                logger.info('使用现有页面');
+            } else {
+                logger.info('创建新页面');
+                page = await browser.newPage();
+            }
+            
+            // 1. 导航到用户主页
+            await page.goto(this.homeUrl + account.email);
+            logger.info('已导航到用户主页');
+            
+            // 等待页面加载
+            await delay(2000);
+            
+            // 2. 定位编辑按钮并点击
+            const editButtonSelector = 'button.btn.btn-block.js-profile-editable-edit-button';
+            await page.waitForSelector(editButtonSelector);
+            await this.humanBehavior.simulateHoverAndClick(page, editButtonSelector);
+            logger.info('已点击编辑按钮');
+            
+            // 3. 模拟人类行为移动鼠标
+            await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 3 });
+            
+            // 4. 定位个人简介文本框并输入内容
+            const bioSelector = '#user_profile_bio';
+            await page.waitForSelector(bioSelector);
+            
+            // 生成随机个人简介
+            const accountGenerator = new AccountGenerator(config);
+            const bio = await accountGenerator.generateBio();
+            
+            // 清空现有内容
+            await page.evaluate((selector) => {
+                document.querySelector(selector).value = '';
+            }, bioSelector);
+            
+            // 模拟人类输入
+            await this.humanBehavior.simulateHumanTyping(page, bioSelector, bio);
+            logger.info('已填写个人简介');
+            
+            // 5. 模拟人类行为移动鼠标
+            await this.humanBehavior.simulateHumanBehavior(page, { duration: 1200, movements: 2 });
+            
+            // 6. 定位公司输入框并输入内容
+            const companySelector = 'input[name="user[profile_company]"]';
+            await page.waitForSelector(companySelector);
+            
+            // 生成随机公司名称
+            const company = await accountGenerator.generateCompany();
+            
+            // 清空现有内容
+            await page.evaluate((selector) => {
+                document.querySelector(selector).value = '';
+            }, companySelector);
+            
+            // 模拟人类输入
+            await this.humanBehavior.simulateHumanTyping(page, companySelector, company);
+            logger.info('已填写公司信息');
+            
+            // 7. 模拟人类行为移动鼠标
+            await this.humanBehavior.simulateHumanBehavior(page, { duration: 1300, movements: 3 });
+            
+            // 8. 定位位置输入框并输入内容
+            const locationSelector = 'input[name="user[profile_location]"]';
+            await page.waitForSelector(locationSelector);
+            
+            // 生成随机位置
+            const location = await  accountGenerator.generateLocation();
+            
+            // 清空现有内容
+            await page.evaluate((selector) => {
+                document.querySelector(selector).value = '';
+            }, locationSelector);
+            
+            // 模拟人类输入
+            await this.humanBehavior.simulateHumanTyping(page, locationSelector, location);
+            logger.info('已填写位置信息');
+            
+            // 9. 模拟人类行为移动鼠标
+            await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 4 });
+            
+            // 10. 定位提交按钮并点击
+            const submitButtonSelector = 'button[data-target="waiting-form.submit"][type="submit"]';
+            await page.waitForSelector(submitButtonSelector);
+            await this.humanBehavior.simulateHoverAndClick(page, submitButtonSelector);
+            logger.info('已点击提交按钮');
+            
+            // 等待提交完成
+            await delay(3000);
+            
+            logger.info('keepalive 流程执行完成');
+            return page;
+        } catch (error) {
+            logger.error('keepalive 流程执行出错:', error);
+            throw error;
+        }
+
+    }
 }
 
 module.exports = Copilot; 

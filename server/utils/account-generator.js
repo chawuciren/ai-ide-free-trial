@@ -175,7 +175,7 @@ class AccountGenerator {
         }
         return array;
     }
-
+   
     // 生成完整账号信息
     async generateAccount() {
         try {
@@ -200,6 +200,88 @@ class AccountGenerator {
         } catch (error) {
             logger.error('生成账号信息失败:', error);
             throw error;
+        }
+    }
+
+    async generateBio() {
+        try {
+            logger.info('开始生成个人简介...');
+            
+            // 简介模板
+            const templates = [
+                "I'm a {{adj}} {{noun}} enthusiast who loves {{verb}} {{object}}.",
+                "{{adj}} {{noun}} developer with passion for {{object}}.",
+                "Working on {{object}} with {{adj}} technologies.",
+                "{{verb}} {{object}} using {{adj}} approaches.",
+                "{{adj}} {{noun}} looking to collaborate on {{object}}.",
+                "Interested in {{object}} and {{adj}} {{noun}} development."
+            ];
+            
+            // 动词列表
+            const verbs = [
+                'building', 'creating', 'developing', 'designing', 'exploring',
+                'learning', 'studying', 'researching', 'optimizing', 'improving'
+            ];
+            
+            // 对象列表
+            const objects = [
+                'web applications', 'mobile apps', 'AI systems', 'cloud solutions',
+                'open source projects', 'data science', 'machine learning models',
+                'blockchain technology', 'IoT devices', 'cybersecurity tools',
+                'game development', 'UI/UX design', 'automation tools'
+            ];
+            
+            // 随机选择模板
+            const template = templates[Math.floor(Math.random() * templates.length)];
+            
+            // 替换模板中的占位符
+            const bio = template
+                .replace('{{adj}}', this.adjectives[Math.floor(Math.random() * this.adjectives.length)])
+                .replace('{{noun}}', this.nouns[Math.floor(Math.random() * this.nouns.length)])
+                .replace('{{verb}}', verbs[Math.floor(Math.random() * verbs.length)])
+                .replace('{{object}}', objects[Math.floor(Math.random() * objects.length)]);
+            
+            logger.info('个人简介生成完成:', bio);
+            return bio;
+        } catch (error) {
+            logger.error('生成个人简介失败:', error);
+            // 出错时返回一个简单的默认值
+            return "Software developer interested in new technologies.";
+        }
+    }
+
+    async  generateCompany() {
+        try {
+            const prefixes = ['Tech', 'Digital', 'Cyber', 'Cloud', 'Data', 'AI', 'Web', 'Mobile', 'Smart', 'Future'];
+            const suffixes = ['Solutions', 'Systems', 'Labs', 'Technologies', 'Group', 'Inc', 'Co', 'Studio', 'Works', 'Hub'];
+            
+            const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+            
+            const company = `${prefix} ${suffix}`;
+            logger.info('生成公司名称:', company);
+            return company;
+        } catch (error) {
+            logger.error('生成公司名称失败:', error);
+            return "Tech Company";
+        }
+    }
+
+    async  generateLocation() {
+        try {
+            const cities = [
+                'San Francisco', 'New York', 'London', 'Berlin', 'Tokyo', 
+                'Singapore', 'Sydney', 'Toronto', 'Amsterdam', 'Stockholm',
+                'Helsinki', 'Oslo', 'Copenhagen', 'Seoul', 'Taipei',
+                'Remote'
+            ];
+            
+            const location = cities[Math.floor(Math.random() * cities.length)];
+            logger.info('生成位置信息:', location);
+            return location;
+        } catch (error) {
+            logger.error('生成位置信息失败:', error);
+            return "Remote";
         }
     }
 }

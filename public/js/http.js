@@ -102,6 +102,8 @@ window.API = {
         complete: () => http.post('/api/register/complete'),
         login: (data) => http.post('/api/register/login', data),
         register: (data) => http.post('/api/register/register', data),
+        keepalive:(data) => http.post('/api/register/keepalive', data),
+
     },
     debug: {
         resetMachineCode: () => http.post('/api/debug/machine-code'),

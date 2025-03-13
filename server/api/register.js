@@ -486,4 +486,55 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.post('/keepalive', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // 初始化浏览器
+        logger.info('正在初始化浏览器...');
+        
+        const config = getConfig();
+        const browserInitializer = new BrowserInitializer(config);
+        const { browser, page } = await browserInitializer.initBrowser();
+
+        if (!browser || !page) {
+            throw new Error('浏览器实例未初始化，请先调用初始化接口');
+        }
+
+        // 根据配置初始化对应的 flow
+        const Flow = config.registration.type === 'copilot' ? Copilot : Cursor;
+        const flow = new Flow();
+
+        const account = { email, password };
+        // 执行登录流程
+        const { browser: loginBrowser, page: loginPage } = await flow.login(browser, page, account);
+        flow.keepalive(browser, loginPage,account);
+        logger.info('浏览器已准备就绪，请在浏览器中完成登录');
+
+
+        // 清理资源
+        if (loginPage) {
+            await loginPage.close();
+        }
+        if (loginBrowser) {
+            await loginBrowser.close();
+        }
+
+        logger.info('保活流程已经完成');
+
+        res.json({
+            success: true,
+            message: '保活流程已完成'
+        });
+
+    } catch (error) {
+        logger.error('初始化登录流程失败:', error);
+        res.status(500).json({
+            success: false,
+            error: '初始化登录流程失败',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router; 

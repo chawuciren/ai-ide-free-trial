@@ -588,6 +588,11 @@ class Cursor {
         }
     }
 
+    async keepalive(browser, initPage,account) {
+ 
+        return true
+    }
+
 }
 
 module.exports = Cursor;
