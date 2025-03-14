@@ -2,12 +2,14 @@ const logger = require('../utils/logger');
 const delay = require('../utils/delay');
 const HumanBehavior = require('../utils/human-behavior');
 const AccountGenerator = require('../utils/account-generator');
+const { getConfig } = require('../utils/config');
 
 class Copilot {
     constructor() {
         this.url = 'https://github.com/signup';
         this.loginUrl = 'https://github.com/login'
         this.homeUrl = 'https://github.com/'
+        this.copiloturl = 'https://github.com/settings/copilot'
         this.humanBehavior = new HumanBehavior();
     }
 
@@ -415,7 +417,7 @@ class Copilot {
     }
 
     async updateAuth(email = null, accessToken = null, refreshToken = null) {
-        logger.info('开始更新 Cursor 认证信息...');
+        logger.info('开始更新 Github 认证信息...');
 
         const updates = [
             ['cursorAuth/cachedSignUpType', 'Auth_0']
@@ -603,45 +605,49 @@ class Copilot {
         }
     }
     
-    async keepalive(browser, page,account) {
-        if (page !=null){
-
-        }else{
-            page = await browser.newPage();
-        //1.到页面 this.homeUrl+account.email'页面
-        }
+    async keepalive(browser, initPage,account) {
+        let page;
         try {
             logger.info('开始执行 keepalive 流程...');
-            
-            if (page != null) {
-                logger.info('使用现有页面');
-            } else {
-                logger.info('创建新页面');
-                page = await browser.newPage();
-            }
-            
+            page = await browser.newPage();
+            const config = getConfig();
+            const accountGenerator = new AccountGenerator(config);
+            const username = account.email.split('@')[0];
             // 1. 导航到用户主页
-            await page.goto(this.homeUrl + account.email);
+            await page.goto(this.homeUrl + username);
             logger.info('已导航到用户主页');
             
-            // 等待页面加载
-            await delay(2000);
+            // // 等待页面加载
+            await delay(5000);
             
             // 2. 定位编辑按钮并点击
             const editButtonSelector = 'button.btn.btn-block.js-profile-editable-edit-button';
-            await page.waitForSelector(editButtonSelector);
-            await this.humanBehavior.simulateHoverAndClick(page, editButtonSelector);
-            logger.info('已点击编辑按钮');
+            const editButtonExists = await page.evaluate((selector) => {
+                return !!document.querySelector(selector);
+            }, editButtonSelector);
+            try{
+                if (editButtonExists) {
+                    logger.info('找到编辑按钮，准备点击');
+                    await page.waitForSelector(editButtonSelector);
+                    await page.click( editButtonSelector);
+                    logger.info('已点击编辑按钮');
+                } else {
+                    logger.info('未找到编辑按钮，跳过点击操作');
+                }
+            }catch{
+                logger.info('未找到编辑按钮，跳过点击操作');
+            }
+
             
             // 3. 模拟人类行为移动鼠标
             await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 3 });
-            
+            logger.info('准备输入个人简介');
             // 4. 定位个人简介文本框并输入内容
             const bioSelector = '#user_profile_bio';
             await page.waitForSelector(bioSelector);
             
             // 生成随机个人简介
-            const accountGenerator = new AccountGenerator(config);
+
             const bio = await accountGenerator.generateBio();
             
             // 清空现有内容
@@ -700,6 +706,45 @@ class Copilot {
             await this.humanBehavior.simulateHoverAndClick(page, submitButtonSelector);
             logger.info('已点击提交按钮');
             
+            await this.humanBehavior.simulateHumanBehavior(page, { duration: 1300, movements: 3 });
+            await page.goto(this.copiloturl);
+            await delay(5000);
+            const copilotSignupSelector = 'a[href="/github-copilot/signup/copilot_individual"]';
+            const signupLinkExists = await page.evaluate((selector) => {
+                return !!document.querySelector(selector);
+            }, copilotSignupSelector);
+            
+            if (signupLinkExists) {
+                await page.goto("https://github.com/github-copilot/signup/billing?payment_duration=monthly")    
+                await delay(5000);
+                const personalInfo = await accountGenerator.generatePersonalInfo()
+                await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 4 });
+                await this.humanBehavior.simulateHumanTyping(page,'#account_screening_profile_first_name', personalInfo.firstName);
+                await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 4 });
+                await this.humanBehavior.simulateHumanTyping(page,'#account_screening_profile_last_name', personalInfo.lastName);
+                await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 4 });
+                await this.humanBehavior.simulateHumanTyping(page,'#account_screening_profile_address1', personalInfo.address);
+                await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 4 });
+                await this.humanBehavior.simulateHumanTyping(page,'#account_screening_profile_city', personalInfo.city);
+                await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 4 });
+                await page.evaluate((countryCode) => {
+                    const selectElement = document.querySelector('#account_screening_profile_country_code');
+                    if (selectElement) {
+                        selectElement.value = countryCode;
+                        // 触发 change 事件
+                        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }, personalInfo.country);
+                await this.humanBehavior.simulateHumanBehavior(page, { duration: 1500, movements: 3 });
+                            // 10. 定位提交按钮并点击
+                const saveBillingBtn = 'button[name="submit"][type="submit"]';
+                await page.waitForSelector(saveBillingBtn);
+                await this.humanBehavior.simulateHoverAndClick(page, saveBillingBtn);
+                logger.info('已点击提交按钮');
+                // 这里可以添加后续处理逻辑
+            } else {
+                logger.info('未找到 Copilot 注册链接，可能已经注册');
+            }
             // 等待提交完成
             await delay(3000);
             

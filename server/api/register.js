@@ -508,7 +508,7 @@ router.post('/keepalive', async (req, res) => {
         const account = { email, password };
         // 执行登录流程
         const { browser: loginBrowser, page: loginPage } = await flow.login(browser, page, account);
-        flow.keepalive(browser, loginPage,account);
+        await flow.keepalive(browser, loginPage,account);
         logger.info('浏览器已准备就绪，请在浏览器中完成登录');
 
 
@@ -528,10 +528,10 @@ router.post('/keepalive', async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('初始化登录流程失败:', error);
+        logger.error('保活流程已经完成:', error);
         res.status(500).json({
             success: false,
-            error: '初始化登录流程失败',
+            error: '保活流程失败',
             message: error.message
         });
     }

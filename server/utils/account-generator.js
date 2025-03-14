@@ -284,6 +284,25 @@ class AccountGenerator {
             return "Remote";
         }
     }
+
+    async generatePersonalInfo(random) {
+        const firstNames = ['James', 'John', 'Robert', 'Michael', 'William', 'David', 'Richard', 'Joseph', 'Thomas', 'Charles'];
+        const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+        const streets = ['Main St', 'Oak Ave', 'Maple Dr', 'Cedar Ln', 'Pine Rd', 'Elm St', 'Washington Ave', 'Park Rd', 'Lake Dr', 'River Rd'];
+        const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'];
+        const country = ['AF', 'AX', 'AW', 'AM', 'BR', 'CV', 'CY', 'GH', 'GL', 'GP'];
+        const getRandomItem = (array) => array[Math.floor(Math.random() * array.length)];
+        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        return {
+            firstName: getRandomItem(firstNames),
+            lastName: getRandomItem(lastNames),
+            address: `${getRandomInt(100, 9999)} ${getRandomItem(streets)}`,
+            city: getRandomItem(cities),
+            country: getRandomItem(country)  // 默认使用美国
+        };
+    }
+    
 }
 
 module.exports = AccountGenerator; 
